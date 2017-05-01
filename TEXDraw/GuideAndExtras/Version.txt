@@ -1,0 +1,30 @@
+
+CURRENT VERSION --------------------------------------------
+
+TEXDraw 3.3.0
+March 16, 2017
+
+LINKS --------------------------------------------------------------
+
+Asset Store: https://www.assetstore.unity3d.com/en/#!/content/51426
+Wello Soft: http://wellosoft.wordpress.com
+
+Request a feature, issue a problem or suggest an improvement via
+Contact: mailto:wildanmubarok22@gmail.com
+Forum: https://forum.unity3d.com/threads/texdraw-create-math-expressions-inside-unity.379305/
+
+LATEST RELEASE NOTE -----------------------------------
+
+3.3 - March 16, 2017: Supplement Upgrade
+- NEW: A new example scene for keeping formulas in the game
+- NEW: Reset button in preference context menu (suitable if you really stuck in a problem)
+- NEW: Editor and additional notes for each supplement
+- NEW: Editor toggle for showing supplement info, optionally (show is default)
+- NEW: TEXSupDepthEffect for giving a depth effect for 3D Based UI
+- NEW: TEXSupTrimSpaces for cleaning unneeded spaces in each paragraph
+- NEW: (Undocumented yet) Modifiable template for creating TEXDraw objects (can be accessed via menu)
+- FIX: Dirty isn't flagged at import which result in Font meta data won't be saved
+- FIX: Dirty isn't flagged at editor change which result in Font meta data won't be saved
+- FIX: (Only in editor) Shadow & Other built-in UI effect is not picked up automatically
+- FIX: console errors isn't readable enough
+- FIX: Possible error on internal part of SerializedDictionary
