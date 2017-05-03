@@ -17,16 +17,16 @@ public class TFQAViewController : QuesAnsViewController {
 	//Behind the scene
 
 	//Generic GameObject Reference
-	public GameObject questionTextGO,qaPanelGO;
+	public GameObject answerGridGO;
 
 	//Generic Prefabs
-	public GameObject ansOption, imagePrefab, trueOptionPF, falseOptionPF;
+	public GameObject ansOption, imagePrefab;
 
 	//Game specific GameObject
-	public GameObject questionGridGO;
+	public GameObject questionGridGO,questionScrollView;
 
 	//Game specific Prefabs
-	public GameObject questionTextPF;
+	public GameObject questionBlockPF;
 
 	//GameObject textureList to hold reference to all textures downloaded
 	List<Texture2D> textureList;
@@ -61,10 +61,11 @@ public class TFQAViewController : QuesAnsViewController {
 
 	//Setting up views
 	public override void setQuesAnsBasedOnIndex(int index){
+		Debug.Log("setQuesAnsBasedOnIndex"+index);
 		quesAnsList.setUserIndex(index);
 		QuesAnsPair currQuesAnsPair = quesAnsList.getCurrentQuesAnsPair ();
 		setQuesView (currQuesAnsPair);
-		if (index==1)
+		if (index==0)
 			setAnsOpView (currQuesAnsPair); 
 
 	}
@@ -72,13 +73,15 @@ public class TFQAViewController : QuesAnsViewController {
 	//Setting Question Views
 	public override  void setQuesView(QuesAnsPair currQuesAnsPair){
 		//Setting Question Text
-		GameObject questionGO = InstantiateNGUIGO(questionTextPF,questionGridGO.transform);
+		GameObject questionGO = InstantiateNGUIGO(questionBlockPF,questionGridGO.transform);
+		questionGO.GetComponent<UIDragScrollView> ().scrollView = questionScrollView.GetComponent<UIScrollView>();
+		questionGridGO.GetComponent<UIGrid> ().Reposition ();
 		questionGO.GetComponentInChildren<TEXDrawNGUI>().text  =  base.getQuestionText(currQuesAnsPair);
 
 		ImageGOList = new List<GameObject> ();
 		//Setting Question Image
 		if (currQuesAnsPair.getQuesImage ().Length > 0) {
-			StartCoroutine (LoadImage (@currQuesAnsPair.getQuesImage (), qaPanelGO));
+			StartCoroutine (LoadImage (@currQuesAnsPair.getQuesImage (), answerGridGO));
 		} 
 		questionEntryAnim (questionGO);
 	}
@@ -91,7 +94,7 @@ public class TFQAViewController : QuesAnsViewController {
 		} else {
 			AnsOpGOList = new List<GameObject> ();
 			for (int j = 0; j < ansOptionList.Count; j = j + 1) {
-				GameObject ansOpObject = (GameObject) InstantiateNGUIGO (ansOption,qaPanelGO.transform,"AnsOp");
+				GameObject ansOpObject = (GameObject) InstantiateNGUIGO (ansOption,answerGridGO.transform,"AnsOp");
 				//Setting Answer Option Text
 				ansOpObject.GetComponentInChildren<TEXDrawNGUI> ().text = base.getAnswerOptionText(currQuesAnsPair,j);
 
@@ -105,11 +108,13 @@ public class TFQAViewController : QuesAnsViewController {
 				UIButton answerButton = ansOpObject.GetComponent<UIButton> ();
 				//Pending UIButton colour of pressed state to change based on its correctFlag
 				int tempInt = j;
+
 				EventDelegate.Set(answerButton.onClick, delegate() { AnswerSelected(tempInt); });
 
 				//Keeping reference to current ansOpObject
 				AnsOpGOList.Add (ansOpObject);
 			}
+			answerGridGO.GetComponent<UIGrid> ().Reposition ();
 			answerOptionEntryAnim ();
 		}
 	}
@@ -178,20 +183,22 @@ public class TFQAViewController : QuesAnsViewController {
 		questionExitAnim ();
 		//Starting next question
 		//changeIndex(1);
-		changeQuestionIndex(1,0);
+		changeQuestionIndex(1,-1);
 	}
 
 	public override void changeQuestionIndex(int increment,int updated){
 		//Destroy (quesImageGO);
 		base.destroyGOList(ImageGOList);
-		base.destroyGOList (AnsOpGOList);
+//		base.destroyGOList (AnsOpGOList);
 		textureList.ForEach (itemTexture => Destroy (itemTexture));
 		quesAnsList.setUserTimeTaken (currentTime);
 		//If right swipe, left swipe or answer selection
+		Debug.Log("increment"+increment+"updated");
 		if (updated == -1) {
 			if (increment > 0) {
 				//Going to next question
 				if (quesAnsList.getUserIndex () < quesAnsList.getMaxIndex () - 1) {
+					Debug.Log ("increment_index"+quesAnsList.getUserIndex () +"+"+ increment);
 					int increment_index = quesAnsList.getUserIndex () + increment;
 					setQuesAnsBasedOnIndex (increment_index);
 

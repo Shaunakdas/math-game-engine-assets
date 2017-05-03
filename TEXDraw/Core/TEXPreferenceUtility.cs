@@ -103,7 +103,7 @@ namespace TexDrawLib
                 CallRedraw();
                 EditorUtility.SetDirty(this);
                 AssetDatabase.SaveAssets();
-                EditorApplication.SaveAssets();
+                AssetDatabase.SaveAssets();
             }
             catch (System.Exception ex)
             {

@@ -23,11 +23,11 @@ public class CombinationQAViewController : QuesAnsViewController {
 	public GameObject ansOption, imagePrefab;
 
 	//Game specific GameObject
-	public GameObject sumTitleGO,submitBtnGO;
-	List<int> multipleCounter; int sumCounter;
+	public GameObject sumBlockGO,submitBtnGO;
+	List<int> multipleCounter; float sumCounter;
 
 	//Game specific Prefabs
-	public GameObject ansOptionPF,ansOpMultipleHolderPF,ansOpMultipleItemPF;
+	public GameObject ansOptionPF,ansOpMultipleItemPF;
 
 	// textureList to hold reference to all textures downloaded
 	List<Texture2D> textureList;
@@ -47,7 +47,7 @@ public class CombinationQAViewController : QuesAnsViewController {
 	}
 	public override void getQAListCallFinished(){
 		//Get QA List API finished. Now Display work can start.
-//		setQuesAnsBasedOnIndex (0);
+		setQuesAnsBasedOnIndex (0);
 	}
 	public override string postQAAttempt(){
 		Debug.Log ("postQAAttempt started");
@@ -111,18 +111,25 @@ public class CombinationQAViewController : QuesAnsViewController {
 				answerOptionEntryAnim (ansOpObject);
 			}
 		}
+		qaPanelGO.GetComponent<UIGrid> ().Reposition ();
 		setSumPanel ();
 	}
 	public void setSumPanel(){
 		//Update sumInt Value based on user action
+		sumCounter=0;
 		for (int i = 0; i < AnsOpGOList.Count; i++) {
-			sumCounter += int.Parse(getQAList ().getCurrentQuesAnsPair ().ansOptionList [i].optionText) * multipleCounter [i];
+			Debug.Log ("number " + getQAList ().getCurrentQuesAnsPair ().ansOptionList [i].optionText+" multiple"+multipleCounter [i]);
+			sumCounter += float.Parse(getQAList ().getCurrentQuesAnsPair ().ansOptionList [i].optionText) * multipleCounter [i];
 		}
+		Debug.Log ("sumCounter " + sumCounter);
 		if (sumCounter > 0) {
+			
 			//Pending set both sumTitleGO and submitBtnGO active
 			//set sumTitleGO as sumCounter
+			sumBlockGO.GetComponentInChildren<TEXDrawNGUI> ().text = sumCounter.ToString ();
 		} else {
 			//Pending set both sumTitleGO and submitBtnGO deactivate
+			sumBlockGO.GetComponentInChildren<TEXDrawNGUI> ().text = "";
 		}
 	}
 	IEnumerator LoadImage(string @Url,GameObject QAGameObject)
@@ -175,8 +182,11 @@ public class CombinationQAViewController : QuesAnsViewController {
 		Debug.Log ("Button clicked = " + buttonNo+ currentTime);
 		//Adding to multiple grid if tapped on a number
 		multipleCounter[buttonNo]++;
+
+		Debug.Log("multipleCounter"+String.Join(",", multipleCounter.Select(i => i.ToString()).ToArray()));
 		GameObject ansOpMultipleHolderGO = getChildGameObject (AnsOpGOList [buttonNo], "AnsOpMultipleHolder");
 		ansOpMultipleHolderGO.AddChild (ansOpMultipleItemPF);
+		updateGridColliderParams (ansOpMultipleHolderGO, multipleCounter [buttonNo]);
 		//Updating sumpanel as multiple has changed
 		setSumPanel ();
 		//Ataching (Popping multiple grid mechanism) to multiple grid
@@ -188,6 +198,8 @@ public class CombinationQAViewController : QuesAnsViewController {
 		//Popping multiple grid if tapped
 		GameObject ansOpMultipleHolderGO = getChildGameObject (AnsOpGOList [buttonNo], "AnsOpMultipleHolder");
 		destroyChildGOList (ansOpMultipleHolderGO);
+		updateGridColliderParams (ansOpMultipleHolderGO, 0);
+		ansOpMultipleHolderGO.GetComponent<UIGrid> ().Reposition ();
 		multipleCounter[buttonNo]=0;
 		setSumPanel ();
 	}
@@ -196,7 +208,7 @@ public class CombinationQAViewController : QuesAnsViewController {
 		questionExitAnim ();
 		//Starting next question
 		//changeIndex(1);
-		changeQuestionIndex(1,0);
+		changeQuestionIndex(1,-1);
 	}
 
 	public override void changeQuestionIndex(int increment,int updated){

@@ -85,6 +85,8 @@ public class QuesAnsViewController : MonoBehaviour {
 	/// Get Text of answer option at given index of current Question Answer Pair
 	/// </summary>
 	public virtual string getAnswerOptionText(QuesAnsPair currQuesAnsPair, int answerIndex){
+		Debug.Log ("answerIndex" + answerIndex);
+		Debug.Log ("getAnswerOptionText" + currQuesAnsPair.ansOptionList [answerIndex].optionText);
 		return  StringWrapper.changeString(currQuesAnsPair.ansOptionList[answerIndex].optionText);
 	}
 	/// <summary>
@@ -131,6 +133,7 @@ public class QuesAnsViewController : MonoBehaviour {
 	/// Check if answer option at given index in given QuesAnsList is correct or not
 	/// </summary>
 	public virtual int getSolutionFlag(QuesAnsList currQuesAnsList,int answerIndex){
+		Debug.Log ("getSolutionFlag" + answerValidated (currQuesAnsList, answerIndex));
 		if (answerValidated(currQuesAnsList,answerIndex)) {
 			return 3;
 		} else {
@@ -260,10 +263,16 @@ public class QuesAnsViewController : MonoBehaviour {
 	/// </summary>
 	public static char GetRandomLetter()
 	{
-		string chars = "abcdefghijklmnopqrstuvwxyz";
-		System.Random rand = new System.Random();
-
-		int num = rand.Next(0, chars.Length -1);
+		string chars = "abcdefghijklmnopqrstuvwxyz+-";
+//		System.Random rand = new System.Random();
+		int num = Random.Range(0,chars.Length-1);
 		return chars[num];
+	}
+	public void  updateGridColliderParams(GameObject gridGO,int multiple){
+		UIGrid grid = gridGO.GetComponent<UIGrid> ();
+		BoxCollider collider = gridGO.GetComponent<BoxCollider> ();
+		grid.Reposition ();
+		collider.size = new Vector3 (grid.cellWidth, grid.cellHeight *multiple);
+		collider.center = new Vector3(0,grid.cellHeight * multiple / 2);
 	}
 }

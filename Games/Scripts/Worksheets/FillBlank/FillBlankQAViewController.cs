@@ -17,7 +17,7 @@ public class FillBlankQAViewController : QuesAnsViewController {
 	//Behind the scene
 
 	//GameObject Reference
-	public GameObject questionTextGO,qaPanelGO;
+	public GameObject answerGridGO;
 
 	//Prefabs
 	public GameObject ansOption, imagePrefab;
@@ -26,7 +26,7 @@ public class FillBlankQAViewController : QuesAnsViewController {
 	List<Texture2D> textureList;
 
 	//Game specific GameObject
-	public GameObject blankGO,questionBlockGO,skipBtnGO,submitBtnGO,deleteBtnGO;
+	public GameObject blankGO,questionBlockGO,submitBtnGO,deleteBtnGO;
 
 	//Game specific Prefabs
 
@@ -50,7 +50,7 @@ public class FillBlankQAViewController : QuesAnsViewController {
 	}
 	public override void getQAListCallFinished(){
 		//Get QA List API finished. Now Display work can start.
-//		setQuesAnsBasedOnIndex (0);
+		setQuesAnsBasedOnIndex (0);
 	}
 	public override string postQAAttempt(){
 		Debug.Log ("postQAAttempt started");
@@ -68,19 +68,20 @@ public class FillBlankQAViewController : QuesAnsViewController {
 		QuesAnsPair currQuesAnsPair = quesAnsList.getCurrentQuesAnsPair ();
 		setQuesView (currQuesAnsPair);
 		setAnsOpView (currQuesAnsPair);
+		answerGridGO.GetComponent<UIGrid> ().Reposition ();
 		entryAnim();
 	}
 
 	//Setting Question Views
 	public override  void setQuesView(QuesAnsPair currQuesAnsPair){
 		//Setting Question Text
-		questionTextGO.GetComponent<TEXDrawNGUI>().text  =  base.getQuestionText(currQuesAnsPair);
+		questionBlockGO.GetComponentInChildren<TEXDrawNGUI>().text  =  base.getQuestionText(currQuesAnsPair);
 		ImageGOList = new List<GameObject> ();
 		//Setting Question Image
 		if (currQuesAnsPair.getQuesImage ().Length > 0) {
-			StartCoroutine (LoadImage (@currQuesAnsPair.getQuesImage (), qaPanelGO));
+			StartCoroutine (LoadImage (@currQuesAnsPair.getQuesImage (), answerGridGO));
 		} 
-		questionEntryAnim (questionTextGO);
+		questionEntryAnim (questionBlockGO);
 		setBlankView ("");
 	}
 	public void setBlankView(string answer){
@@ -89,7 +90,7 @@ public class FillBlankQAViewController : QuesAnsViewController {
 		questionEntryAnim (blankGO);
 	}
 	public void setBlankText(string answer){
-		blankGO.GetComponent<TEXDrawNGUI>().text  =answer;
+		blankGO.GetComponentInChildren<TEXDrawNGUI>().text  =answer;
 	}
 	//Setting Answer Views
 	public override  void setAnsOpView(QuesAnsPair currQuesAnsPair){
@@ -101,7 +102,7 @@ public class FillBlankQAViewController : QuesAnsViewController {
 		} else {
 			AnsOpGOList = new List<GameObject> ();
 			for (int j = 0; j < ansOptionList.Count; j = j + 1) {
-				GameObject ansOpObject = (GameObject) InstantiateNGUIGO (ansOption,qaPanelGO.transform,"AnsOp");
+				GameObject ansOpObject = (GameObject) InstantiateNGUIGO (ansOption,answerGridGO.transform,"AnsOp");
 				//Setting Answer Option Text
 				ansOpObject.GetComponentInChildren<TEXDrawNGUI> ().text = ansOptionList[j];
 
@@ -118,6 +119,7 @@ public class FillBlankQAViewController : QuesAnsViewController {
 				answerOptionEntryAnim (ansOpObject);
 			}
 		}
+		answerGridGO.GetComponent<UIGrid> ().Reposition ();
 	}
 	public List<string> populateAnsOptionList(List<string> ansOpList){
 		if (ansOpList.Count < 10) {
@@ -189,14 +191,15 @@ public class FillBlankQAViewController : QuesAnsViewController {
 	public override void AnswerSelected(int buttonNo)
 	{
 		Debug.Log ("Button clicked = " + buttonNo+ currentTime);
-		blankText += AnsOpGOList [buttonNo].GetComponent<TEXDrawNGUI> ().text;
+		blankText += AnsOpGOList [buttonNo].GetComponentInChildren<TEXDrawNGUI> ().text;
 		blankTextRefList.Add (buttonNo);
 		//Pending: Set color of user selected option to light color and interactable false
 		setBlankText(blankText);
 	}
 	public void SkipSelected(){
 		int ansOpIndex = blankTextRefList.Last ();
-		blankText = blankText.Substring(blankText.Length-1);
+		blankText = blankText.Substring(0,blankText.Length-1);
+		Debug.Log ("New text is " + blankText);
 		//Pending: Set color of ansOpGoList[ansOpIndex] to dark color and interactable true
 		setBlankText(blankText);
 	}
@@ -207,7 +210,7 @@ public class FillBlankQAViewController : QuesAnsViewController {
 			correctAnsAnim ();
 		else 
 			incorrectAnsAnim ();
-		changeQuestionIndex(1,0);
+		changeQuestionIndex(1,-1);
 	}
 	public override void changeQuestionIndex(int increment,int updated){
 		//Destroy (quesImageGO);

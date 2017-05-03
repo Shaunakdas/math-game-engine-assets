@@ -6,7 +6,7 @@ using System.Linq;
 using SimpleJSON;
 public class TFQANetworkController : MonoBehaviour {
 
-	public static readonly string domain = "localhost:3000";
+	public static readonly string domain = "http://91d1070d.ngrok.io";
 	TFQAViewController commonQAViewCtrl;
 	public bool getQAListNetworkCallResponse { get; set; } 
 	public bool postQAAttemptNetworkCallResponse { get; set; } 

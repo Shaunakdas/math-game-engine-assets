@@ -14,6 +14,7 @@ public class ComparisionQAViewController : QuesAnsViewController {
 	ComparisionQANetworkController commonQANetworkObject;
 	List<GameObject> ImageGOList,AnsOpGOList;
 	List<int> correctOrderList;
+	public float cellHeight;
 	//Behind the scene
 
 	//GameObject Reference
@@ -30,6 +31,7 @@ public class ComparisionQAViewController : QuesAnsViewController {
 
 	// Use this for initialization
 	public override void Start () {
+		continueBtnGO.SetActive (false);
 		quesAnsList = new QuesAnsList();
 		textureList = new List<Texture2D> ();
 		correctOrderList = new List<int> ();
@@ -44,7 +46,7 @@ public class ComparisionQAViewController : QuesAnsViewController {
 	}
 	public override void getQAListCallFinished(){
 		//Get QA List API finished. Now Display work can start.
-//		setQuesAnsBasedOnIndex (0);
+		setQuesAnsBasedOnIndex (0);
 	}
 	public override string postQAAttempt(){
 		Debug.Log ("postQAAttempt started");
@@ -68,7 +70,8 @@ public class ComparisionQAViewController : QuesAnsViewController {
 	//Setting Question Views
 	public override  void setQuesView(QuesAnsPair currQuesAnsPair){
 		//Setting Question Text
-		questionTextGO.GetComponent<TEXDrawNGUI>().text  =  base.getQuestionText(currQuesAnsPair);
+		if(base.getQuestionText(currQuesAnsPair).Length>0)
+			questionTextGO.GetComponent<TEXDrawNGUI>().text  =  base.getQuestionText(currQuesAnsPair);
 		ImageGOList = new List<GameObject> ();
 		//Setting Question Image
 		if (currQuesAnsPair.getQuesImage ().Length > 0) {
@@ -82,30 +85,33 @@ public class ComparisionQAViewController : QuesAnsViewController {
 		//Changing to answerOption
 		List<AnswerOption> ansOptionList = currQuesAnsPair.ansOptionList;
 		if (ansOptionList.Count == 0) {
-			changeQuestionIndex (1,-1);
+//			changeQuestionIndex (1,-1);
 		} else {
 			AnsOpGOList = new List<GameObject> ();
 			for (int j = 0; j < ansOptionList.Count; j = j + 1) {
 				GameObject ansOpObject = (GameObject) InstantiateNGUIGO (ansOption,qaPanelGO.transform,"AnsOp");
 				//Setting Answer Option Text
 				ansOpObject.GetComponentInChildren<TEXDrawNGUI> ().text = base.getAnswerOptionText(currQuesAnsPair,j);
-
+				Debug.Log ("adding element " + j + ansOpObject.transform.localPosition.ToString());
 				//Setting Answer option Image
 				if (ansOptionList[j].optionImg.Length > 0) {
 					ansOpObject.GetComponent<Image>().color = new Vector4(0.5F, 0.5F, 0.5F, 1);
 					StartCoroutine (LoadImage (base.getAnswerOptionImageUrl(currQuesAnsPair,j), ansOpObject));
 				}
-
+				continueBtnGO.SetActive (false);
 				//Setting Button onClickListener
 				UIButton answerButton = submitBtnGO.GetComponent<UIButton> ();
 				EventDelegate.Set(answerButton.onClick, delegate() { AnswerSelected(); });
 
 				//Keeping reference to current ansOpObject
 				AnsOpGOList.Add (ansOpObject);
+
 				correctOrderList.Add (ansOptionList [j].correctOrder);
 				answerOptionEntryAnim (ansOpObject);
+				cellHeight = qaPanelGO.GetComponent<UIGrid> ().cellHeight;
 			}
 		}
+		qaPanelGO.GetComponent<UIGrid> ().Reposition ();
 	}
 	public int getAnsOpOrder(GameObject AnsOp){
 		return AnsOp.transform.GetSiblingIndex ();
@@ -162,6 +168,8 @@ public class ComparisionQAViewController : QuesAnsViewController {
 		//For incorrect animation
 		//Pending incorrect answer animation 
 		submitExitAnim();
+		setListCorrectOrder ();
+		continueBtnGO.SetActive (true);
 		continueEntryAnim(continueBtnGO);
 	}
 	public void continueEntryAnim(GameObject continueBtnGO){
@@ -169,6 +177,8 @@ public class ComparisionQAViewController : QuesAnsViewController {
 	}
 	public void continueExitAnim(){
 		//Pending Continue Button animation to go down
+		continueBtnGO.SetActive (false);
+		changeQuestionIndex(1,-1);
 	}
 
 
@@ -179,13 +189,14 @@ public class ComparisionQAViewController : QuesAnsViewController {
 		foreach (GameObject ansOp in AnsOpGOList) {
 			setInputOrder (ansOp,getAnsOpOrder(ansOp));
 		}
-		quesAnsList.postQuestionCalculations (getSolutionFlag(), (float)(currentTime));
+//		quesAnsList.postQuestionCalculations (getSolutionFlag(), (float)(currentTime));
 		if (getSolutionFlag () == 3)
 			correctAnsAnim ();
 		else 
 			incorrectAnsAnim ();
 		//changeIndex(1);
-		changeQuestionIndex(1,0);
+
+//		changeQuestionIndex(1,-1);
 	}
 	public override bool answerValidated(){
 		List<AnswerOption> ansOptionList = getQAList ().getCurrentQuesAnsPair ().ansOptionList;
@@ -207,13 +218,46 @@ public class ComparisionQAViewController : QuesAnsViewController {
 		List<int> sortCorrectOrderList = correctOrderList;
 		List<AnswerOption> ansOptionList = getQAList ().getCurrentQuesAnsPair ().ansOptionList;
 		sortCorrectOrderList.Sort ();
-		foreach (int correctOrder in sortCorrectOrderList) {
-			GameObject ansOpGO = AnsOpGOList[correctOrderList.IndexOf(correctOrder)];
-			setCorrectOrder (ansOpGO, correctOrder);
+		startCorrecting (0);
+//		changeQuestionIndex(1,-1);
+	}
+	public void startCorrecting(int index){
+		GameObject ansOpGO = AnsOpGOList[index];
+		setCorrectOrder (ansOpGO, index);
+	}
+	public void setCorrectOrder(GameObject AnsOp, int correctIndex){
+		qaPanelGO.GetComponent<UIGrid> ().Reposition ();
+		Vector3 newPosition = qaPanelGO.GetComponent<UIGrid> ().GetChild (0).transform.localPosition;
+		newPosition.y = newPosition.y - (correctIndex * cellHeight);
+		if (qaPanelGO.GetComponent<UIGrid> ().GetChild (correctIndex).gameObject != AnsOp) {
+			Debug.Log (qaPanelGO.GetComponent<UIGrid> ().GetChild (correctIndex).GetComponentInChildren<TEXDrawNGUI>().text);
+			newPosition.y=  newPosition.y + 10f;
+//			AnsOp.GetComponent<SpringPosition> ().target = newPosition;
+//
+//			AnsOp.GetComponent<SpringPosition> ().onFinished(new EventDelegate(ResetGrid (correctIndex + 1)));
+//			EventDelegate.Set (AnsOp.GetComponent<SpringPosition> ().onFinished, delegate() {
+//				ResetGrid (correctIndex+1);
+//			});
+			AnsOp.GetComponent<TweenPosition> ().from = AnsOp.transform.localPosition;
+			AnsOp.GetComponent<TweenPosition> ().to = newPosition;
+			AnsOp.GetComponent<TweenPosition> ().Play (true);
+			int newIndex = correctIndex + 1;
+			EventDelegate.Set (AnsOp.GetComponent<TweenPosition> ().onFinished, delegate() {
+				ResetGrid (newIndex);
+			});
+		} else {
+			startCorrecting (correctIndex + 1);
 		}
 	}
-	public void setCorrectOrder(GameObject AnsOp, int correcOrder){
-		//Pending animation to animate ansOpGO to position correctOrder
+	public void ResetGrid(int index){
+		qaPanelGO.GetComponent<UIGrid> ().Reposition ();
+		startCorrecting(index);
+	}
+	IEnumerator MyMethod() {
+		Debug.Log("Before Waiting 2 seconds");
+		yield return new WaitForSeconds(10);
+		Debug.Log("After Waiting 2 Seconds");
+
 	}
 	public override void changeQuestionIndex(int increment,int updated){
 		//Destroy (quesImageGO);

@@ -7,6 +7,7 @@ using System;
 using SimpleJSON;
 
 public class EstimationQAViewController : QuesAnsViewController {
+	NumberLineDisplay numberLine;
 	//Display Variables
 	int totalOptionCount = 4;
 	float currentTime=0,totalTime=0,maxCurrentTime = 90;
@@ -17,16 +18,17 @@ public class EstimationQAViewController : QuesAnsViewController {
 	//Behind the scene
 
 	//GameObject Reference
-	public GameObject questionTextGO,qaPanelGO;
+	public GameObject questionTextGO;
 
 	//Prefabs
-	public GameObject ansOption, imagePrefab;
+	public GameObject imagePrefab;
 
 	//GameObject textureList to hold reference to all textures downloaded
 	List<Texture2D> textureList;
 
 	// Use this for initialization
 	public override void Start () {
+		numberLine = gameObject.GetComponent<NumberLineDisplay> ();
 		quesAnsList = new QuesAnsList();
 		textureList = new List<Texture2D> ();
 		setQAList ();
@@ -40,7 +42,7 @@ public class EstimationQAViewController : QuesAnsViewController {
 	}
 	public override void getQAListCallFinished(){
 		//Get QA List API finished. Now Display work can start.
-//		setQuesAnsBasedOnIndex (0);
+		setQuesAnsBasedOnIndex (0);
 	}
 	public override string postQAAttempt(){
 		Debug.Log ("postQAAttempt started");
@@ -68,13 +70,15 @@ public class EstimationQAViewController : QuesAnsViewController {
 		ImageGOList = new List<GameObject> ();
 		//Setting Question Image
 		if (currQuesAnsPair.getQuesImage ().Length > 0) {
-			StartCoroutine (LoadImage (@currQuesAnsPair.getQuesImage (), qaPanelGO));
+//			StartCoroutine (LoadImage (@currQuesAnsPair.getQuesImage (), qaPanelGO));
 		} 
 	}
 	//Setting Answer Views
 	public override  void setAnsOpView(QuesAnsPair currQuesAnsPair){
 		//Changing to answerOption
-
+		numberLine.defaultValues();
+		numberLine.initNumberLineCalculations ();
+		numberLine.initNumberLineDisplay ();
 	}
 	IEnumerator LoadImage(string @Url,GameObject QAGameObject)
 	{
@@ -107,23 +111,28 @@ public class EstimationQAViewController : QuesAnsViewController {
 
 
 	//On Selection of answer
-	public override void AnswerSelected(int buttonNo)
+	public void AnswerSelected()
 	{
-		Debug.Log ("Button clicked = " + buttonNo+ currentTime);
-		//Selected Flag of current option set to true
-		base.setSelectionflag(quesAnsList,buttonNo);
-		//GO: Set color of user selected option to light color
-		quesAnsList.postQuestionCalculations (base.getSolutionFlag(quesAnsList,buttonNo), (float)(currentTime));
-		QuesEndAnimation(1,-1);
+		quesAnsList.postQuestionCalculations (getSolutionFlag(numberLine), (float)(currentTime));
 		//Starting next question
 		//changeIndex(1);
-		changeQuestionIndex(1,0);
+		changeQuestionIndex(1,-1);
 	}
-
+	/// <summary>
+	/// Check if answer option at given index in given QuesAnsList is correct or not
+	/// </summary>
+	public virtual int getSolutionFlag(NumberLineDisplay line){
+		if (line.checkUserSelectorPosition()) {
+			return 3;
+		} else {
+			return 2;
+		}
+	}
 	public override void changeQuestionIndex(int increment,int updated){
+		
 		//Destroy (quesImageGO);
-		base.destroyGOList(ImageGOList);
-		base.destroyGOList (AnsOpGOList);
+//		base.destroyGOList(ImageGOList);
+//		base.destroyGOList (AnsOpGOList);
 		textureList.ForEach (itemTexture => Destroy (itemTexture));
 		quesAnsList.setUserTimeTaken (currentTime);
 		//If right swipe, left swipe or answer selection
